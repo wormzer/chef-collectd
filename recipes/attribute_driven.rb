@@ -1,4 +1,6 @@
 node["collectd"]["plugins"].each_pair do |plugin_key, definition|
+  config = (definition["config"] || {}).dup
+
   # Graphite auto-discovery
   if plugin_key.to_s == "write_graphite"
     if node["collectd"]["graphite_ipaddress"].empty?
@@ -10,16 +12,16 @@ node["collectd"]["plugins"].each_pair do |plugin_key, definition|
       if graphite_server_results.empty?
         Chef::Application.fatal!("Graphite plugin enabled but no Graphite server found.")
       else
-        definition["config"]["Host"] = graphite_server_results[0]["ipaddress"]
+        config["Host"] = graphite_server_results[0]["ipaddress"]
       end
     else
-      definition["config"]["Host"] = node["collectd"]["graphite_ipaddress"]
+      config["Host"] = node["collectd"]["graphite_ipaddress"]
     end
-    definition["config"]["Port"] = 2003
+    config["Port"] = 2003
   end
 
   collectd_plugin plugin_key.to_s do
-    config definition["config"].to_hash if definition["config"]
+    config config.to_hash if config
     template definition["template"].to_s if definition["template"]
     cookbook definition["cookbook"].to_s if definition["cookbook"]
   end
